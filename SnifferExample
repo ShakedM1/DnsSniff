@@ -1,0 +1,124 @@
+//PcapDotNet DNS sniffer example
+using System;
+using System.Collections.Generic;
+using PcapDotNet.Core;
+using PcapDotNet.Packets;
+using PcapDotNet.Packets.IpV4;
+using PcapDotNet.Packets.Transport;
+using PcapDotNet.Packets.Dns;
+
+namespace ConsoleApplication37
+{
+    class Program
+    {
+        static void Main(string[] args)
+        {
+            // Retrieve the device list from the local machine
+            IList<LivePacketDevice> allDevices = LivePacketDevice.AllLocalMachine;
+
+            if (allDevices.Count == 0)
+            {
+                Console.WriteLine("No interfaces found! Make sure WinPcap is installed.");
+                return;
+            }
+
+            // Print the list
+            for (int i = 0; i != allDevices.Count; ++i)
+            {
+                LivePacketDevice device = allDevices[i];
+                Console.Write((i + 1) + ". " + device.Name);
+                if (device.Description != null)
+                    Console.WriteLine(" (" + device.Description + ")");
+                else
+                    Console.WriteLine(" (No description available)");
+            }
+
+            int deviceIndex = 0;
+            do
+            {
+                Console.WriteLine("Enter the interface number (1-" + allDevices.Count + "):");
+                string deviceIndexString = Console.ReadLine();
+                if (!int.TryParse(deviceIndexString, out deviceIndex) ||
+                    deviceIndex < 1 || deviceIndex > allDevices.Count)
+                {
+                    deviceIndex = 0;
+                }
+            } while (deviceIndex == 0);
+
+            // Take the selected adapter
+            PacketDevice selectedDevice = allDevices[deviceIndex - 1];
+
+            // Open the device
+            using (PacketCommunicator communicator =
+                selectedDevice.Open(65536,                                  // portion of the packet to capture
+                                                                            // 65536 guarantees that the whole packet will be captured on all the link layers
+                                    PacketDeviceOpenAttributes.Promiscuous, // promiscuous mode
+                                    1000))                                  // read timeout
+            {
+                Console.WriteLine("Listening on " + selectedDevice.Description + "...");
+
+                // Retrieve the packets
+                Packet packet;
+                do
+                {
+                    PacketCommunicatorReceiveResult result = communicator.ReceivePacket(out packet);
+                    using (BerkeleyPacketFilter filter = communicator.CreateFilter("port 53"))
+                    {
+                        // Set the filter
+                        communicator.SetFilter(filter);
+                    }
+                    switch (result)
+                    {
+                        case PacketCommunicatorReceiveResult.Timeout:
+                            // Timeout elapsed
+                            continue;
+                        case PacketCommunicatorReceiveResult.Ok:
+                            IpV4Datagram ip = packet.Ethernet.IpV4;
+                            UdpDatagram udp = ip.Udp;
+                            DnsDatagram dns = udp.Dns;
+                            if (dns.IsQuery)
+                            {
+                                Console.WriteLine(packet.Timestamp.ToString("yyyy-MM-dd hh:mm:ss.fff") + " length:" +
+                                                  packet.Length);
+                                DnsDomainName[] names = ExtractDnsQueries(packet);
+                                for (int i = 0; i < names.Length; i++)
+                                {
+                                    Console.WriteLine(names[i].ToString());
+                                }
+                                foreach (DnsDomainName domain in names)
+                                {
+                                    Console.WriteLine("=======================");
+                                    if (domain == null)
+                                        Console.WriteLine("No queries");
+
+                                    Console.WriteLine(domain.ToString());
+                                }
+                            }
+                            break;
+                        default:
+                            throw new InvalidOperationException("The result " + result + " shoudl never be reached here");
+                    }
+                } while (true);
+            }
+        }//main
+
+        //To be activated only on DNS packets!(port 53 tcp or udp
+        public static DnsDomainName[] ExtractDnsQueries(Packet pkt)
+        {
+            IpV4Datagram ip = pkt.Ethernet.IpV4;
+            UdpDatagram udp = ip.Udp;
+            DnsDatagram dns = udp.Dns;
+            
+                //No check for query count is needed becuase the number of queries is equal to querycount
+                DnsDomainName[] names = new DnsDomainName[dns.QueryCount];
+                int i = 0;
+                foreach (DnsQueryResourceRecord record in dns.Queries)
+                {
+                    names[i] = record.DomainName;
+                    i++;
+                }
+                return names;
+                               
+        }//extreactqueries
+    }
+}
