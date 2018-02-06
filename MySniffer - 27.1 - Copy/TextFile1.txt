@@ -1,0 +1,13 @@
+﻿1. הכרזה על delegate
+private delegate void AddItem(ListViewItem item);//delegate 
+
+2. AddItem addItem = new AddItem(OnAddItem);//call method OnAddItem by new delegate
+
+3. listView1.Invoke(addItem,  item );//invoke the methode in thread
+
+4. הפעולה להפעלה על ידי delegate
+private void OnAddItem(ListViewItem item)
+        {
+            //treeView.Nodes.Add(node);
+            listView1.Items.Add(item);
+        }
