@@ -22,25 +22,34 @@ namespace DNSSniffer
         public int CaptureIndex;
         //get all live capture devices
         IList<LivePacketDevice> allDevices = LivePacketDevice.AllLocalMachine;
+        public bool sniffing = false;
         public Form1()
         {
             InitializeComponent();
             GetCaptureDevices();
         }
 
-
+        
         private void SelectInterface_Click(object sender, EventArgs e)
         {            
             int selected;
             
-            if (InterfaceListBox.SelectedItem != null)
+            if (InterfaceListBox.SelectedItem != null && !sniffing)
             {
+                
                 selected = InterfaceListBox.SelectedIndex;
                 MessageBox.Show(selected.ToString());
                 CaptureIndex = selected;
+                InterfaceStatus.Text = "Status: "+InterfaceListBox.SelectedItem.ToString()+" Selected";
             }
             else
+            {
+                if (sniffing)
+                    MessageBox.Show("You have to stop sniffing to change interface!");
+                else
                 MessageBox.Show("Please select an interface");
+            }
+                
         }
 
         private void listBox1_SelectedIndexChanged(object sender, EventArgs e)
@@ -78,10 +87,21 @@ namespace DNSSniffer
 
         private void SniffButton_Click(object sender, EventArgs e)
         {
-            if (backgroundWorker1.IsBusy != true)
+            if (backgroundWorker1.IsBusy != true )
             {
                 // Start the asynchronous operation.
                 backgroundWorker1.RunWorkerAsync();
+                SniffButton.Text = "Stop Sniffing";
+                SniffingStatus.Text = "Status: Sniffing";
+                sniffing = true;
+                ReportListView.Visible = true;
+            }
+            else if (sniffing)
+            {
+                backgroundWorker1.CancelAsync();
+                SniffButton.Text = "Start Sniffing";
+                SniffingStatus.Text = "Not Sniffing";
+                sniffing = false;
             }
         }
 
@@ -117,7 +137,7 @@ namespace DNSSniffer
             item.SubItems.Add(ip);
             item.SubItems.Add(report);
             ReportListView.Items.Add(item);
-            //ReportListView.Items[ReportListView.Items.Count - 1].EnsureVisible();
+            ReportListView.Items[ReportListView.Items.Count - 1].EnsureVisible();
         }
 
         private void ReportListView_SelectedIndexChanged(object sender, EventArgs e)
@@ -187,7 +207,7 @@ namespace DNSSniffer
                         default:
                             throw new InvalidOperationException("The result " + result + " should never be reached here");
                     }
-                } while (true);
+                } while (!backgroundWorker1.CancellationPending);
             }
         
         }//background worker
@@ -196,6 +216,12 @@ namespace DNSSniffer
         {
 
         }
+
+        private void clearbtn_Click(object sender, EventArgs e)
+        {
+            ReportListView.Items.Clear();
+        }
+        
     }
 }
 

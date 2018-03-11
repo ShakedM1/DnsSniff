@@ -38,6 +38,9 @@
             this.columnHeader1 = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
             this.columnHeader5 = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
             this.columnHeader6 = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
+            this.clearbtn = new System.Windows.Forms.Button();
+            this.InterfaceStatus = new System.Windows.Forms.Label();
+            this.SniffingStatus = new System.Windows.Forms.Label();
             this.SuspendLayout();
             // 
             // SelectInterface
@@ -90,6 +93,7 @@
             // 
             // backgroundWorker1
             // 
+            this.backgroundWorker1.WorkerSupportsCancellation = true;
             this.backgroundWorker1.DoWork += new System.ComponentModel.DoWorkEventHandler(this.backgroundWorker1_DoWork);
             // 
             // ReportListView
@@ -104,6 +108,7 @@
             this.ReportListView.TabIndex = 5;
             this.ReportListView.UseCompatibleStateImageBehavior = false;
             this.ReportListView.View = System.Windows.Forms.View.Details;
+            this.ReportListView.Visible = false;
             this.ReportListView.SelectedIndexChanged += new System.EventHandler(this.ReportListView_SelectedIndexChanged_1);
             // 
             // columnHeader1
@@ -118,11 +123,42 @@
             // 
             this.columnHeader6.Text = "Report:";
             // 
+            // clearbtn
+            // 
+            this.clearbtn.Location = new System.Drawing.Point(534, 205);
+            this.clearbtn.Name = "clearbtn";
+            this.clearbtn.Size = new System.Drawing.Size(75, 23);
+            this.clearbtn.TabIndex = 6;
+            this.clearbtn.Text = "Clear";
+            this.clearbtn.UseVisualStyleBackColor = true;
+            this.clearbtn.Click += new System.EventHandler(this.clearbtn_Click);
+            // 
+            // InterfaceStatus
+            // 
+            this.InterfaceStatus.AutoSize = true;
+            this.InterfaceStatus.Location = new System.Drawing.Point(57, 98);
+            this.InterfaceStatus.Name = "InterfaceStatus";
+            this.InterfaceStatus.Size = new System.Drawing.Size(105, 13);
+            this.InterfaceStatus.TabIndex = 7;
+            this.InterfaceStatus.Text = "Status: Not Selected";
+            // 
+            // SniffingStatus
+            // 
+            this.SniffingStatus.AutoSize = true;
+            this.SniffingStatus.Location = new System.Drawing.Point(131, 202);
+            this.SniffingStatus.Name = "SniffingStatus";
+            this.SniffingStatus.Size = new System.Drawing.Size(98, 13);
+            this.SniffingStatus.TabIndex = 8;
+            this.SniffingStatus.Text = "Status: Not Sniffing";
+            // 
             // Form1
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(645, 501);
+            this.Controls.Add(this.SniffingStatus);
+            this.Controls.Add(this.InterfaceStatus);
+            this.Controls.Add(this.clearbtn);
             this.Controls.Add(this.ReportListView);
             this.Controls.Add(this.SniffButton);
             this.Controls.Add(this.label2);
@@ -148,6 +184,9 @@
         private System.Windows.Forms.ColumnHeader columnHeader1;
         private System.Windows.Forms.ColumnHeader columnHeader5;
         private System.Windows.Forms.ColumnHeader columnHeader6;
+        private System.Windows.Forms.Button clearbtn;
+        private System.Windows.Forms.Label InterfaceStatus;
+        private System.Windows.Forms.Label SniffingStatus;
     }
 }
 
