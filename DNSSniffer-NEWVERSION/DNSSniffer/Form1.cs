@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Data;
@@ -13,6 +13,8 @@ using PcapDotNet.Packets;
 using PcapDotNet.Packets.Dns;
 using PcapDotNet.Packets.IpV4;
 using PcapDotNet.Packets.Transport;
+using System.IO;
+using System.Text.RegularExpressions;
 
 namespace DNSSniffer
 {
@@ -23,6 +25,7 @@ namespace DNSSniffer
         //get all live capture devices
         IList<LivePacketDevice> allDevices = LivePacketDevice.AllLocalMachine;
         public bool sniffing = false;
+        public string logpath = "";
         public Form1()
         {
             InitializeComponent();
@@ -91,9 +94,16 @@ namespace DNSSniffer
             {
                 // Start the asynchronous operation.
                 backgroundWorker1.RunWorkerAsync();
+                //create the log file with introduction line
+                string str = "Log File Created " + DateTime.Now.ToString() + " Network Interface: " + InterfaceListBox.SelectedItem.ToString();
+                string path = GetUniqueFilePath(@"D:\testtxt\log.txt");
+                System.IO.File.WriteAllText(path, str);
+                logpath = path;
+                //
                 SniffButton.Text = "Stop Sniffing";
                 SniffingStatus.Text = "Status: Sniffing";
                 sniffing = true;
+                //show the table
                 ReportListView.Visible = true;
             }
             else if (sniffing)
@@ -105,7 +115,7 @@ namespace DNSSniffer
             }
         }
 
-        //To be activated only on DNS packets!(port 53 tcp or udp
+        //To be activated only on DNS packets!(port 53 tcp or udp)
         public static DnsDomainName[] ExtractDnsQueries(Packet pkt)
         {
             IpV4Datagram ip = pkt.Ethernet.IpV4;
@@ -198,6 +208,9 @@ namespace DNSSniffer
                                     if (domain != null)
                                     {
                                         AddToListView(timestamp, ip.Source.ToString(), domain.ToString());
+                                        //add the packet details to the log file
+                                        string str = timestamp + " " + ip.Source.ToString() + " " + domain.ToString();
+                                        Appendlog(logpath, str);
                                         //Console.WriteLine(domain.ToString());
                                     }
                                 }
@@ -221,7 +234,43 @@ namespace DNSSniffer
         {
             ReportListView.Items.Clear();
         }
-        
+
+        public static string GetUniqueFilePath(string filepath)
+        {
+            if (File.Exists(filepath))
+            {
+                string folder = Path.GetDirectoryName(filepath);
+                string filename = Path.GetFileNameWithoutExtension(filepath);
+                string extension = Path.GetExtension(filepath);
+                int number = 1;
+
+                Match regex = Regex.Match(filepath, @"(.+) \((\d+)\)\.\w+");
+
+                if (regex.Success)
+                {
+                    filename = regex.Groups[1].Value;
+                    number = int.Parse(regex.Groups[2].Value);
+                }
+
+                do
+                {
+                    number++;
+                    filepath = Path.Combine(folder, string.Format("{0} ({1}){2}", filename, number, extension));
+                }
+                while (File.Exists(filepath));
+            }
+
+            return filepath;
+        }//getunuiquepath
+
+        public void Appendlog(string path, string content)
+        {
+            using (System.IO.StreamWriter file = new System.IO.StreamWriter(path, true))
+            {
+                file.WriteLine(content);
+            }
+        }//appendlog
+
     }
 }
 
